@@ -10,8 +10,10 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.minshenglife.zookeeper.client.watcher.callback.ZookeeperClientDataException;
+import com.minshenglife.zookeeper.client.watcher.exception.ZookeeperClientDataException;
 
 
 /**
@@ -20,6 +22,8 @@ import com.minshenglife.zookeeper.client.watcher.callback.ZookeeperClientDataExc
  * @Date 2015年1月22日 上午9:41:54
  */
 public class DataChangeWatcher implements Watcher {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataChangeWatcher.class);
     private static final Map<String,NodeChangeCallback> CALLBACK_MAP = new HashMap<String, NodeChangeCallback>();
     
     /**
@@ -28,6 +32,7 @@ public class DataChangeWatcher implements Watcher {
      * @param callback
      */
     public static void registCallback(MonitorPath mon) {
+        LOGGER.debug("注册znode[{}]监听器[{}]",mon.getPath(),mon.getCallback().getClass().getName());
         CALLBACK_MAP.put(mon.getPath(), mon.getCallback());
     }
     
@@ -49,6 +54,7 @@ public class DataChangeWatcher implements Watcher {
     public void process(WatchedEvent event) {
         String path = event.getPath();
         EventType eventType = event.getType();
+        LOGGER.debug("事件:{},znode:{}",eventType,path);
         if(!eventType.equals(EventType.None) && path!=null){
             byte[] data = null;
             List<String> children = new ArrayList<String>(0);
@@ -59,6 +65,7 @@ public class DataChangeWatcher implements Watcher {
                     children.addAll(zk.getChildren(path, null));
                 }
             } catch (Exception e) {
+                LOGGER.error("获取znode{}数据是错误",path,e);
                 throw new ZookeeperClientDataException(path, "获取数据时出错", e);
             }
             CALLBACK_MAP.get(path).on(event.getPath(), data, children, event);

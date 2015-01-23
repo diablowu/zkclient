@@ -12,8 +12,10 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.minshenglife.zookeeper.client.watcher.callback.ZookeeperClientDataException;
+import com.minshenglife.zookeeper.client.watcher.exception.ZookeeperClientDataException;
 import com.minshenglife.zookeeper.client.watcher.exception.ZookeeperClientException;
 
 /**
@@ -23,7 +25,7 @@ import com.minshenglife.zookeeper.client.watcher.exception.ZookeeperClientExcept
  */
 public class ZnodeDataMonitor implements Watcher {
     
-//    private static final Logger LOGGER = new
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZnodeDataMonitor.class);
     
     private ZooKeeper zk;
     
@@ -39,20 +41,28 @@ public class ZnodeDataMonitor implements Watcher {
         try {
             zk = new ZooKeeper(servers, 10000, this);
         }catch(Exception e){
-            e.printStackTrace();
+            LOGGER.error("初始化zk对象时出错",e);
+            throw new ZookeeperClientException("初始化zk对象时出错", e);
         }
+        
+        LOGGER.debug("当前zk状态{}, 开始等待zk连接完成",zk.getState());
         
         if(!zk.getState().equals(States.CONNECTED)){
             while(true){
                 if(zk.getState().equals(States.CONNECTED)){
+                    LOGGER.debug("当前zk状态{}, zk连接完成",zk.getState());
                     break;
                 }
                 try {
+                    LOGGER.debug("当前zk状态{}, 等待5秒",zk.getState());
                     TimeUnit.SECONDS.sleep(5);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LOGGER.error("等待连接时出错",e);
+                    throw new ZookeeperClientException("等待连接时出错", e);
                 }
             }
+            
+            LOGGER.debug("当前zk状态{}, zk连接初始化完成",zk.getState());
         }
     }
     
@@ -63,6 +73,7 @@ public class ZnodeDataMonitor implements Watcher {
         try {
            data = zk.getData(path, null, null);
         } catch (Exception e) {
+            LOGGER.error("读取znode[{}]时出错",path,e);
             throw new ZookeeperClientDataException(path, "读取数据时发生异常", e);
         } 
         
@@ -72,7 +83,8 @@ public class ZnodeDataMonitor implements Watcher {
     
     public void monitAll(List<MonitorPath> monitors){
         if(MAX_MONITOR_SIZE < monitors.size()){
-            throw new IllegalArgumentException("最多只能监听30个znode");
+            LOGGER.error("最多只能支持监听{}个znode",MAX_MONITOR_SIZE);
+            throw new IllegalArgumentException("最多只能监听"+MAX_MONITOR_SIZE+"个znode");
         }
         this.taskPool = Executors.newFixedThreadPool(monitors.size());
         
@@ -85,7 +97,8 @@ public class ZnodeDataMonitor implements Watcher {
         try {
             taskPool.invokeAll(tasks);
         } catch (InterruptedException e) {
-            throw new ZookeeperClientException("任务调度失败", e);
+            LOGGER.error("注册监听器任务启动失败",e);
+            throw new ZookeeperClientException("注册监听器任务启动失败", e);
         }
     }
     

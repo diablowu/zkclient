@@ -2,8 +2,6 @@ package com.minshenglife.zktest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -12,8 +10,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooKeeper.States;
-import org.apache.zookeeper.data.Stat;
 
 import com.minshenglife.zookeeper.client.watcher.MonitorPath;
 import com.minshenglife.zookeeper.client.watcher.ZnodeDataMonitor;
@@ -26,7 +22,7 @@ public class Init implements ServletContextListener, Watcher {
     public void contextInitialized(ServletContextEvent sce) {
         String path = "/test/wx/token";
         String path1 = "/test/wx/ticket";
-        String servers = "10.0.22.137:2181,10.0.22.137:2182,10.0.22.137:2183";
+        String servers = "10.0.22.154:2181,10.0.22.154:2182,10.0.22.137:2181,10.0.22.137:2182,10.0.22.137:2183";
         
         
         ZnodeDataMonitor mon = new ZnodeDataMonitor(servers);

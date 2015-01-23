@@ -1,6 +1,5 @@
-package com.minshenglife.zookeeper.client.watcher.callback;
+package com.minshenglife.zookeeper.client.watcher.exception;
 
-import com.minshenglife.zookeeper.client.watcher.exception.ZookeeperClientException;
 
 public class ZookeeperClientDataException extends ZookeeperClientException {
 
